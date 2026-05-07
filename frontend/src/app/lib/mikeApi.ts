@@ -14,6 +14,9 @@ import type {
     MikeMessage,
     MikeProject,
     MikeWorkflow,
+    DecisionJournalEntry,
+    InvestmentOverview,
+    InvestmentThesis,
     TabularReview,
     TabularReviewDetailOut,
 } from "@/app/components/shared/types";
@@ -118,6 +121,121 @@ export async function updateProject(
 
 export async function deleteProject(projectId: string): Promise<void> {
     await apiRequest(`/projects/${projectId}`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------------------
+// Investment research
+// ---------------------------------------------------------------------------
+
+export async function getInvestmentOverview(): Promise<InvestmentOverview> {
+    return apiRequest<InvestmentOverview>("/investment/overview");
+}
+
+export type InvestmentThesisPayload = Partial<
+    Pick<
+        InvestmentThesis,
+        | "project_id"
+        | "security_id"
+        | "title"
+        | "asset_name"
+        | "thesis_md"
+        | "bull_case_md"
+        | "base_case_md"
+        | "bear_case_md"
+        | "key_risks_md"
+        | "kill_criteria_md"
+        | "time_horizon"
+        | "confidence_score"
+        | "status"
+        | "review_date"
+    >
+>;
+
+export async function listInvestmentTheses(
+    projectId?: string,
+): Promise<InvestmentThesis[]> {
+    const qs = projectId ? `?project_id=${encodeURIComponent(projectId)}` : "";
+    return apiRequest<InvestmentThesis[]>(`/investment/theses${qs}`);
+}
+
+export async function createInvestmentThesis(
+    payload: InvestmentThesisPayload,
+): Promise<InvestmentThesis> {
+    return apiRequest<InvestmentThesis>("/investment/theses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function updateInvestmentThesis(
+    thesisId: string,
+    payload: InvestmentThesisPayload,
+): Promise<InvestmentThesis> {
+    return apiRequest<InvestmentThesis>(`/investment/theses/${thesisId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function deleteInvestmentThesis(thesisId: string): Promise<void> {
+    await apiRequest(`/investment/theses/${thesisId}`, { method: "DELETE" });
+}
+
+export type DecisionJournalPayload = Partial<
+    Pick<
+        DecisionJournalEntry,
+        | "project_id"
+        | "portfolio_id"
+        | "security_id"
+        | "thesis_id"
+        | "decision_date"
+        | "asset_name"
+        | "action"
+        | "rationale_md"
+        | "valuation_view_md"
+        | "risks_md"
+        | "disconfirming_evidence_md"
+        | "position_sizing_md"
+        | "review_date"
+        | "confidence_score"
+        | "outcome_md"
+    >
+>;
+
+export async function listDecisionJournalEntries(
+    projectId?: string,
+): Promise<DecisionJournalEntry[]> {
+    const qs = projectId ? `?project_id=${encodeURIComponent(projectId)}` : "";
+    return apiRequest<DecisionJournalEntry[]>(`/investment/journal${qs}`);
+}
+
+export async function createDecisionJournalEntry(
+    payload: DecisionJournalPayload,
+): Promise<DecisionJournalEntry> {
+    return apiRequest<DecisionJournalEntry>("/investment/journal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function updateDecisionJournalEntry(
+    entryId: string,
+    payload: DecisionJournalPayload,
+): Promise<DecisionJournalEntry> {
+    return apiRequest<DecisionJournalEntry>(`/investment/journal/${entryId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function deleteDecisionJournalEntry(
+    entryId: string,
+): Promise<void> {
+    await apiRequest(`/investment/journal/${entryId}`, { method: "DELETE" });
 }
 
 export interface ProjectPeople {

@@ -10,6 +10,66 @@ export interface ColumnPreset {
 
 export const PROMPT_PRESETS: ColumnPreset[] = [
     {
+        name: "Business Description",
+        matches: /\bbusiness\b|\bdescription\b|\bmodel\b/i,
+        format: "text",
+        prompt: "Summarise the business model, main products or services, customer base, and revenue drivers using only the source document. Do not add unsourced market data.",
+    },
+    {
+        name: "Revenue Growth",
+        matches: /\brevenue\b|\bgrowth\b|\bsales\b/i,
+        format: "text",
+        prompt: "Extract revenue, sales, customer, volume, or segment growth evidence from the document. Include period references and figures only if explicitly stated. If not found, state Not Found.",
+    },
+    {
+        name: "Margins",
+        matches: /\bmargin\b|\bprofitability\b|\bebitda\b|\boperating income\b/i,
+        format: "text",
+        prompt: "Extract margin, profitability, EBITDA, operating income, or unit-economics commentary from the document. Include figures only if explicitly stated.",
+    },
+    {
+        name: "Free Cash Flow",
+        matches: /\bfree cash flow\b|\bfcf\b|\bcash generation\b/i,
+        format: "text",
+        prompt: "Extract free cash flow, operating cash flow, cash conversion, or cash generation commentary from the document. Include period and currency where stated.",
+    },
+    {
+        name: "Balance Sheet",
+        matches: /\bbalance sheet\b|\bdebt\b|\bcash\b|\bliquidity\b|\bleverage\b/i,
+        format: "text",
+        prompt: "Extract cash, debt, liquidity, leverage, or balance-sheet strength indicators from the document. Include period and currency where stated.",
+    },
+    {
+        name: "Moat",
+        matches: /\bmoat\b|\bcompetitive\b|\badvantage\b|\bswitching cost\b|\bnetwork effect\b/i,
+        format: "text",
+        prompt: "Identify evidence for competitive advantage, switching costs, scale, network effects, brand, cost advantage, intellectual property, or regulatory barriers.",
+    },
+    {
+        name: "Bull Case",
+        matches: /\bbull\b|\bupside\b/i,
+        format: "text",
+        prompt: "Summarise the strongest upside case supported by the document. Clearly mark assumptions and avoid unsupported price targets.",
+    },
+    {
+        name: "Bear Case",
+        matches: /\bbear\b|\bdownside\b/i,
+        format: "text",
+        prompt: "Summarise the strongest downside case supported by the document. Clearly mark assumptions and avoid unsupported price targets.",
+    },
+    {
+        name: "Kill Criteria",
+        matches: /\bkill criteria\b|\bthesis break\b|\bbreak.*thesis\b/i,
+        format: "bulleted_list",
+        prompt: "Identify evidence or conditions that would weaken or break the thesis. Use only source-supported points or explicit assumptions.",
+    },
+    {
+        name: "Key Risks",
+        matches: /\brisk\b|\brisks\b/i,
+        format: "bulleted_list",
+        prompt: "List the key risks stated or strongly evidenced in the document. Do not include generic risks unless they are supported by the source material.",
+    },
+    {
         name: "Parties",
         matches: /\bpart(y|ies)\b/i,
         format: "bulleted_list",

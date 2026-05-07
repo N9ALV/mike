@@ -2,6 +2,171 @@ import type { MikeWorkflow } from "../shared/types";
 
 export const BUILT_IN_WORKFLOWS: MikeWorkflow[] = [
     {
+        id: "builtin-investment-memo",
+        user_id: null,
+        is_system: true,
+        created_at: "",
+        title: "Investment Memo",
+        type: "assistant",
+        practice: "Investment Research",
+        prompt_md:
+            "## Investment Memo\n\n" +
+            "Create a cited investment memo from the available source documents and any explicit user-provided assumptions. " +
+            "Use uploaded documents as primary evidence. Do not invent financial metrics, prices, valuation multiples, holdings, or market data. " +
+            "If important data is missing, state that clearly and leave a labelled gap or assumption.\n\n" +
+            "Use generate_docx to produce a downloadable Word document with sections for executive summary, source base, bull/base/bear case, risks, valuation assumptions, kill criteria, decision considerations, and review triggers.",
+        columns_config: null,
+    },
+    {
+        id: "builtin-company-research",
+        user_id: null,
+        is_system: true,
+        created_at: "",
+        title: "Public Company Research",
+        type: "assistant",
+        practice: "Investment Research",
+        prompt_md:
+            "## Public Company Research\n\n" +
+            "Analyse the selected company using uploaded filings, transcripts, presentations, reports, and user-provided context. " +
+            "Separate facts from assumptions. Do not use model memory for current prices, recent financials, or live market data. " +
+            "Cover business model, revenue drivers, margins and cash generation where sourced, balance sheet, management, moat, risks, bull/base/bear case, disconfirming evidence, and kill criteria.",
+        columns_config: null,
+    },
+    {
+        id: "builtin-public-equity-matrix",
+        user_id: null,
+        is_system: true,
+        created_at: "",
+        title: "Public Equity Matrix",
+        type: "tabular",
+        practice: "Investment Research",
+        prompt_md:
+            "Compare public companies, filings, earnings transcripts, reports, or investor decks using an investment research matrix.",
+        columns_config: [
+            {
+                index: 0,
+                name: "Business Description",
+                format: "text",
+                prompt: "Summarise the business model, main products or services, and revenue drivers from the source material. Do not add unsourced market data.",
+            },
+            {
+                index: 1,
+                name: "Growth Evidence",
+                format: "text",
+                prompt: "Extract evidence of revenue, customer, volume, segment, or market growth from the document. Include period references where stated. If not found, state Not Found.",
+            },
+            {
+                index: 2,
+                name: "Margin and Cash Flow",
+                format: "text",
+                prompt: "Extract margin, profitability, cash-flow, or unit-economics commentary from the document. Include figures only if they are explicitly stated.",
+            },
+            {
+                index: 3,
+                name: "Balance Sheet",
+                format: "text",
+                prompt: "Extract cash, debt, liquidity, leverage, or balance-sheet strength indicators from the document. Include period and currency where stated.",
+            },
+            {
+                index: 4,
+                name: "Moat",
+                format: "text",
+                prompt: "Identify evidence for competitive advantage, switching costs, scale, network effects, brand, cost advantage, intellectual property, or regulatory barriers.",
+            },
+            {
+                index: 5,
+                name: "Management Quality",
+                format: "text",
+                prompt: "Extract evidence relevant to management quality, execution, incentives, capital allocation, credibility, or governance.",
+            },
+            {
+                index: 6,
+                name: "Key Risks",
+                format: "bulleted_list",
+                prompt: "List the key risks stated or strongly evidenced in the document. Do not include generic risks unless they are supported by the source material.",
+            },
+            {
+                index: 7,
+                name: "Bull Case",
+                format: "text",
+                prompt: "Summarise the strongest upside case supported by the document. Mark assumptions clearly.",
+            },
+            {
+                index: 8,
+                name: "Bear Case",
+                format: "text",
+                prompt: "Summarise the strongest downside case supported by the document. Mark assumptions clearly.",
+            },
+            {
+                index: 9,
+                name: "Kill Criteria",
+                format: "bulleted_list",
+                prompt: "Identify evidence or conditions that would weaken or break the thesis. Use only source-supported points or explicit assumptions.",
+            },
+        ],
+    },
+    {
+        id: "builtin-deal-diligence-matrix",
+        user_id: null,
+        is_system: true,
+        created_at: "",
+        title: "Private Deal Diligence Matrix",
+        type: "tabular",
+        practice: "Investment Research",
+        prompt_md:
+            "Compare private deals, real estate opportunities, pitch decks, fund letters, or offering memoranda using a diligence matrix.",
+        columns_config: [
+            {
+                index: 0,
+                name: "Opportunity",
+                format: "text",
+                prompt: "Identify the asset, company, fund, property, or deal being presented, including location or sector where stated.",
+            },
+            {
+                index: 1,
+                name: "Economics",
+                format: "text",
+                prompt: "Extract purchase price, valuation, target return, cap rate, yield, fees, or other economic terms that are explicitly stated.",
+            },
+            {
+                index: 2,
+                name: "Sponsor or Management",
+                format: "text",
+                prompt: "Summarise sponsor, manager, founder, or operator track record and incentives from the source material.",
+            },
+            {
+                index: 3,
+                name: "Assumptions",
+                format: "bulleted_list",
+                prompt: "List the major assumptions used in the opportunity or deal case, including growth, margins, rents, exit multiples, cap rates, leverage, or timing where stated.",
+            },
+            {
+                index: 4,
+                name: "Downside Sensitivity",
+                format: "text",
+                prompt: "Extract any downside, sensitivity, stress-case, or break-even analysis. If not present, state Not Found.",
+            },
+            {
+                index: 5,
+                name: "Liquidity",
+                format: "text",
+                prompt: "Summarise lockups, redemption limits, exit timing, transfer restrictions, liquidity constraints, or holding-period assumptions.",
+            },
+            {
+                index: 6,
+                name: "Key Risks",
+                format: "bulleted_list",
+                prompt: "List deal-specific risks supported by the document, including legal, structural, operational, market, financing, customer, or execution risks.",
+            },
+            {
+                index: 7,
+                name: "Follow-up Questions",
+                format: "bulleted_list",
+                prompt: "List the most important diligence questions that remain unanswered by the document.",
+            },
+        ],
+    },
+    {
         id: "builtin-cp-checklist",
         user_id: null,
         is_system: true,

@@ -262,7 +262,7 @@ tabularRouter.post("/prompt", requireAuth, async (req, res) => {
         docNote +
         `\nExpected response format: ${formatHint}` +
         tagsNote +
-        `\n\nWrite the best extraction prompt for a legal tabular review column with this title. ` +
+        `\n\nWrite the best extraction prompt for an investment research matrix column with this title. ` +
         `Do NOT include any instruction about the response format in the prompt — ` +
         `format handling is applied separately and must not be duplicated inside the prompt text.`;
 
@@ -271,7 +271,7 @@ tabularRouter.post("/prompt", requireAuth, async (req, res) => {
         const raw = await completeText({
             model: title_model,
             systemPrompt:
-                'You write high-quality column prompts for legal tabular review workflows. Return only valid JSON with a single field: {"prompt": string}. The prompt you write must focus solely on what to extract — never on how to format the response.',
+                'You write high-quality column prompts for investment research matrix workflows. Return only valid JSON with a single field: {"prompt": string}. The prompt you write must focus solely on what to extract — never on how to format the response. Never ask the model to invent financial data.',
             user: userMessage,
             maxTokens: 512,
             apiKeys: api_keys,
@@ -1052,9 +1052,9 @@ function buildTabularMessages(
         .map((c, i) => `- COL:${i} "${c.name}"`)
         .join("\n");
 
-    const systemContent = `You are Mike, an AI legal assistant. You are helping with the tabular review titled "${reviewTitle}".
+    const systemContent = `You are Mike, an AI investment research assistant. You are helping with the research matrix titled "${reviewTitle}".
 
-The review extracts specific fields from multiple legal documents into a structured table.
+The review extracts specific fields from multiple source documents into a structured table.
 You do NOT have the cell content yet — call read_table_cells to fetch the cells you need before answering.
 
 DOCUMENTS (rows):
@@ -1353,12 +1353,12 @@ async function queryGemini(
     const suffix = formatPromptSuffix(format as never, tags);
     const fullPrompt = `${columnPrompt}${suffix} If not found, state "Not Found". Leave all reasoning and explanation in the "reasoning" field only.`;
 
-    const EXTRACTION_SYSTEM = `You are a legal document analyst. Return ONLY valid JSON:
+    const EXTRACTION_SYSTEM = `You are an investment research document analyst. Return ONLY valid JSON:
 {"summary": string, "flag": "green"|"grey"|"yellow"|"red", "reasoning": string}
 
 The "summary" and "reasoning" field values may use markdown formatting (bullets, bold, italics, etc.) — the values are still plain JSON strings (escape newlines as \\n), but the text inside will be rendered as markdown in the UI.
 
-The "summary" field must contain only the extracted value with inline citations — no explanation or reasoning. Every factual claim in "summary" must be followed immediately by a citation in the format [[page:N||quote:exact quoted text]], where N is the page number and the quote is a short verbatim excerpt (≤ 25 words). The quote must be narrowly scoped to the specific claim it supports — extract only the exact words that support that statement, not the surrounding sentence or paragraph. Do not have multiple claims share the same long quote; if two different statements need different evidence, give each its own short, narrowly-scoped quote. All reasoning and explanation belongs in "reasoning" only, which may also contain citations.`;
+The "summary" field must contain only the extracted value with inline citations — no explanation or reasoning. Every factual claim in "summary" must be followed immediately by a citation in the format [[page:N||quote:exact quoted text]], where N is the page number and the quote is a short verbatim excerpt (≤ 25 words). The quote must be narrowly scoped to the specific claim it supports — extract only the exact words that support that statement, not the surrounding sentence or paragraph. Do not have multiple claims share the same long quote; if two different statements need different evidence, give each its own short, narrowly-scoped quote. All reasoning and explanation belongs in "reasoning" only, which may also contain citations. Never invent financial figures, holdings, performance, dates, prices, or source claims.`;
 
     let raw: string;
     try {
@@ -1512,7 +1512,7 @@ async function queryGeminiAllColumns(
         })
         .join("\n");
 
-    const SYSTEM = `You are a legal document analyst. Extract information for each column listed below.
+    const SYSTEM = `You are an investment research document analyst. Extract information for each column listed below.
 
 For each column, output exactly one minified JSON object on its own line (no line breaks inside the JSON), then a newline. Process columns in order and output each result as soon as you finish it.
 
@@ -1521,9 +1521,10 @@ Line format:
 
 Rules:
 - "summary": the extracted value with inline citations [[page:N||quote:verbatim excerpt ≤25 words]] after every factual claim. No explanation or reasoning here. Quotes must be narrowly scoped to the specific claim — extract only the exact supporting words, not the full surrounding sentence. Do not reuse one long quote across multiple statements; give each claim its own short, precise quote.
-- "flag": green = standard/favorable, yellow = needs attention, red = problematic/unfavorable, grey = neutral/not found
+- "flag": green = supportive/positive, yellow = needs attention, red = material risk/negative, grey = neutral/not found
 - "reasoning": brief explanation of the extraction
 - The "summary" and "reasoning" string VALUES may use markdown (bullets, bold, italics, etc.) — escape newlines as \\n inside the JSON string. This markdown is rendered in the UI.
+- Never invent financial figures, holdings, performance, dates, prices, or source claims.
 - Output ONLY the JSON lines themselves. Do NOT wrap the response in markdown code fences (e.g. \`\`\`json), and do not add any preamble or summary.`;
 
     const USER = `Document: ${filename}\n\n${documentText.slice(0, 120_000)}\n\n---\nColumns to extract:\n${columnsDesc}`;

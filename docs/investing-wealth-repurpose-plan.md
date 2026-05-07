@@ -15,11 +15,11 @@ Mike can be repurposed into an AI investing and wealth-creation operating system
 - collaboration and sharing
 - configurable model-provider support
 
-The current legal-specific behavior should be treated as a domain layer, not as the product's permanent identity. The valuable foundation is the workflow architecture: documents, projects, AI chat, reusable workflows, extraction tables, versioned outputs, and collaboration.
+The current legal-specific behaviour should be treated as a domain layer, not as the product's permanent identity. The valuable foundation is the workflow architecture: documents, projects, AI chat, reusable workflows, extraction tables, versioned outputs, and collaboration.
 
 That maps naturally to investment research, portfolio construction, decision journaling, due diligence, memo generation, and ongoing monitoring.
 
-The recommended first product is not an AI trading bot or stock picker. The strongest first wedge is an AI investment research workspace that helps users analyze documents and data, compare opportunities, create investment memos, maintain theses, and improve decision discipline.
+The recommended first product is not an AI trading bot or stock picker. The strongest first wedge is an AI investment research workspace that helps users analyse documents and data, compare opportunities, create investment memos, maintain theses, and improve decision discipline.
 
 ## Current codebase strengths
 
@@ -78,7 +78,7 @@ Repurpose the assistant from a legal assistant to an investment research assista
 
 Suggested positioning:
 
-> You are an investment research assistant. You help users analyze securities, portfolios, financial documents, valuation, risk, and wealth-planning decisions. You separate facts from assumptions, quantify uncertainty where possible, cite source material, and avoid unsupported personalized financial advice.
+> You are an investment research assistant. You help users analyse securities, portfolios, financial documents, valuation, risk, and wealth-planning decisions. You separate facts from assumptions, quantify uncertainty where possible, cite source material, and avoid unsupported personalised financial advice.
 
 The current legal system prompt should be replaced. Its useful pattern is strong citation discipline and tool-driven document access, but the legal drafting and contract-specific instructions should be removed.
 
@@ -235,6 +235,176 @@ Additional features:
 - quarterly wealth reports
 
 This is strategically interesting but should come after Version A or Version B.
+
+## Target operating stack
+
+Use the stack already available instead of introducing a new hosting platform for the first release.
+
+### Supabase responsibilities
+
+Supabase should remain the system of record for:
+
+- authentication
+- user profiles and model settings
+- projects/research workspaces
+- documents and document metadata
+- workflows/playbooks
+- chats and assistant messages
+- tabular review state
+- theses
+- decision journal entries
+- securities, market data, portfolios, and holdings when those layers are added
+
+Supabase Row Level Security should protect direct client access where the frontend reads from Supabase. Backend routes must still perform explicit access checks because the current app uses a server API for most application behaviour.
+
+### Cloudflare responsibilities
+
+Cloudflare should provide the public edge:
+
+- DNS for the product subdomain
+- TLS
+- WAF and bot protection
+- Cloudflare Access for private prototype or internal beta access
+- R2 object storage for original uploads, converted PDFs, generated DOCX files, and exports
+- optional caching for static assets
+- optional Pages or Workers hosting later if the frontend build is proven compatible
+
+Cloudflare Workers should not be on the critical path for document conversion because the app needs LibreOffice. Keep conversion in the Node backend on Contabo unless a separate conversion service is introduced.
+
+### Contabo responsibilities
+
+Contabo should host the runtime pieces that need a normal server:
+
+- backend Express API
+- Next.js frontend for the first prototype, unless Cloudflare Pages is explicitly chosen after build verification
+- LibreOffice document conversion
+- background ingestion jobs
+- scheduled market-data and filing sync jobs
+- health checks and application logs
+- local temporary file processing before upload to R2
+
+Use a process manager such as systemd or PM2, or a small Docker Compose setup, but avoid Kubernetes-scale orchestration for the MVP.
+
+### Recommended MVP topology
+
+```text
+User browser
+  -> Cloudflare DNS/TLS/WAF/Access
+  -> Contabo frontend
+  -> Contabo backend API
+  -> Supabase Auth/Postgres
+  -> Cloudflare R2
+  -> Model providers
+```
+
+Recommended public routes:
+
+- `https://research.<domain>` or `https://invest.<domain>` for the frontend
+- `https://research-api.<domain>` or `/api` reverse-proxied to the backend
+- private beta protected by Cloudflare Access until product/legal copy is settled
+
+## Environment and configuration plan
+
+Keep configuration explicit and auditable. The MVP should have three environment surfaces:
+
+- Supabase project: Auth settings, Postgres schema, RLS policies, service role key for server processes only.
+- Cloudflare account: DNS records, Access application, R2 bucket, R2 API token, optional cache rules.
+- Contabo server: Node/Bun runtime, LibreOffice, app env files, process manager, log rotation, deployment directory.
+
+Minimum backend environment variables:
+
+```text
+SUPABASE_URL=
+SUPABASE_SECRET_KEY=
+R2_ENDPOINT_URL=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
+OPENROUTER_API_KEY=
+DOWNLOAD_SIGNING_SECRET=
+FRONTEND_URL=
+```
+
+Minimum frontend environment variables:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=
+SUPABASE_SECRET_KEY=
+NEXT_PUBLIC_API_BASE_URL=
+```
+
+The current frontend includes server-side Supabase helpers, so `SUPABASE_SECRET_KEY` may be present in the frontend server process environment when hosted on Contabo. It must never be exposed with a `NEXT_PUBLIC_` prefix or sent to the browser.
+
+Market-data provider keys should be added only when Phase 3 starts. Until then, unsupported price, valuation, and fundamentals requests should be refused or answered only from uploaded source documents with clear caveats.
+
+## Deployment sequence for the existing stack
+
+### Step 1: Private prototype
+
+Goal: run the repurposed product privately with minimal new infrastructure.
+
+Tasks:
+
+- create or select a Supabase project
+- run the one-shot schema plus the new thesis and journal migrations
+- create a Cloudflare R2 bucket for Mike documents and generated outputs
+- deploy backend and frontend on Contabo
+- install LibreOffice on Contabo and verify DOC/DOCX/PDF conversion
+- put Cloudflare in front of the chosen subdomain
+- enable Cloudflare Access for the product while it is still pre-release
+- configure model-provider keys
+- verify upload, conversion, chat, citations, tabular review, generated memo, thesis save, and decision journal save
+
+Exit criteria:
+
+- a logged-in user can complete the full MVP research loop on the live domain
+- uploaded files and generated documents land in R2
+- application data lands in Supabase
+- Cloudflare Access blocks unauthorised traffic
+- backend logs are available on Contabo
+
+### Step 2: Internal beta
+
+Goal: make the product usable by a small group without exposing it as a public advisory product.
+
+Tasks:
+
+- add production disclaimer and non-advice copy
+- add basic audit logs for memo generation, thesis creation, and decision journal creation
+- add health-check endpoints for frontend and backend
+- add automated database backup review for Supabase
+- add R2 lifecycle and retention rules
+- add error monitoring or at least structured server logs
+- add a simple deployment runbook
+- document rollback steps
+
+Exit criteria:
+
+- beta users can be added or removed through Supabase Auth and Cloudflare Access
+- failures in upload, conversion, chat, or generated output are visible in logs
+- a deploy can be rolled back without data loss
+
+### Step 3: Public research workspace
+
+Goal: remove private-beta friction while preserving trust boundaries.
+
+Tasks:
+
+- remove Cloudflare Access only after public signup, terms, and disclaimers are ready
+- add rate limits at Cloudflare and backend levels
+- add per-user storage and message usage limits
+- add billing or manual entitlement controls if needed
+- add data-source status pages for market-data providers once Phase 3 starts
+- add user-facing data freshness indicators
+
+Exit criteria:
+
+- unauthenticated users can sign up through the intended route
+- abuse controls exist before public traffic arrives
+- financial-data answers show provenance and timestamps where applicable
 
 ## Recommended build sequence
 
@@ -492,14 +662,14 @@ Tool outputs should always include:
 
 Replace the current legal prompt with an investing prompt that enforces evidence discipline.
 
-Key behavior rules:
+Key behaviour rules:
 
 - Separate facts, assumptions, estimates, model outputs, and opinions.
 - Use uploaded documents, filings, transcripts, and market-data tools as primary evidence.
 - Never invent prices, financial metrics, holdings, or performance numbers.
 - Always show the date or period for financial data.
 - Explain uncertainty and sensitivity to assumptions.
-- Avoid unsupported personalized financial advice.
+- Avoid unsupported personalised financial advice.
 - When discussing a specific action, frame output as research support unless the product later has compliant advisory infrastructure.
 - Cite documents with exact quotes when making claims about document content.
 - Cite market/fundamental data with source, period, and retrieval timestamp.
@@ -509,7 +679,7 @@ Key behavior rules:
 Suggested system prompt skeleton:
 
 ```text
-You are an investment research and wealth-planning assistant. You help users analyze securities, funds, portfolios, private investments, real estate deals, financial documents, valuation, risk, and long-term wealth decisions.
+You are an investment research and wealth-planning assistant. You help users analyse securities, funds, portfolios, private investments, real estate deals, financial documents, valuation, risk, and long-term wealth decisions.
 
 You must distinguish facts, assumptions, estimates, model outputs, and opinions. Never fabricate financial data, prices, holdings, performance, filings, or document content. Use available tools for market data, portfolio data, filings, transcripts, and uploaded documents. When data is stale, incomplete, or unavailable, say so clearly.
 
@@ -582,7 +752,7 @@ Every material investment decision should support:
 - review date
 - follow-up outcome
 
-Future assistant behavior:
+Future assistant behaviour:
 
 - remind the user when a review date is reached
 - compare new evidence with the original thesis
@@ -722,6 +892,8 @@ app.use('/alerts', alertsRouter);
 app.use('/journal', decisionJournalRouter);
 ```
 
+For the first Contabo-hosted MVP, these routes should remain in the existing Express backend. A later Cloudflare Worker API layer may be useful for lightweight public endpoints, but the core authenticated application API should stay close to the Supabase service role key, document conversion pipeline, and scheduled jobs.
+
 ## Data-source considerations
 
 Potential data sources, subject to licensing, budget, and reliability:
@@ -736,6 +908,20 @@ Potential data sources, subject to licensing, budget, and reliability:
 
 Important implementation rule: store source metadata and timestamps on every imported data point.
 
+### Data source rollout with the current stack
+
+Phase 1 should not require a market-data vendor. It should work from uploaded source documents and user-entered thesis or journal data.
+
+Phase 3 can add provider-specific ingestion jobs on Contabo:
+
+- scheduled price-history import
+- scheduled fundamentals import
+- SEC filing metadata import
+- transcript or investor-presentation import where licensing allows
+- portfolio CSV import
+
+Each ingestion job should write normalised rows to Supabase and store raw source payloads or generated artefacts in R2 when retention is allowed. All assistant tools that read this data must return source, period, currency, and retrieval timestamp.
+
 ## Compliance and trust boundaries
 
 This product should initially operate as research and education software, not as a registered advisory platform.
@@ -745,8 +931,8 @@ Important boundaries:
 - Do not guarantee returns.
 - Do not present model outputs as certainties.
 - Do not fabricate performance or valuation metrics.
-- Do not provide personalized buy/sell instructions without appropriate compliance infrastructure.
-- Distinguish general research from personalized advice.
+- Do not provide personalised buy/sell instructions without appropriate compliance infrastructure.
+- Distinguish general research from personalised advice.
 - Log sources and assumptions.
 - Show timestamps and data provenance.
 - Require user confirmation before logging major decisions.
@@ -788,7 +974,7 @@ A user creates a research workspace, uploads source documents, asks cited questi
 - brokerage execution
 - guaranteed recommendations
 - fully automated portfolio management
-- complex tax optimization
+- complex tax optimisation
 - real-time market-data dependence
 
 ### MVP success criteria
@@ -802,22 +988,39 @@ A user creates a research workspace, uploads source documents, asks cited questi
 
 ## Implementation checklist
 
+### Infrastructure checklist
+
+- [ ] Choose the product subdomain.
+- [ ] Create or select the Supabase project.
+- [ ] Create the Cloudflare R2 bucket.
+- [ ] Create a least-privilege R2 API token for the backend.
+- [ ] Configure Cloudflare DNS for frontend and backend routes.
+- [ ] Configure Cloudflare Access for private prototype access.
+- [ ] Provision the Contabo deployment directory.
+- [ ] Install Node/Bun and LibreOffice on Contabo.
+- [ ] Configure backend and frontend env files on Contabo.
+- [ ] Configure systemd, PM2, or Docker Compose process management.
+- [ ] Configure log rotation and a basic health-check URL.
+- [ ] Document deployment and rollback commands.
+
 ### Immediate code changes
 
-- [ ] Add new investing system prompt.
+- [x] Add new investing system prompt.
 - [ ] Rename legal-facing labels in the frontend.
-- [ ] Seed investing workflows.
-- [ ] Seed investing tabular templates.
-- [ ] Add thesis table migration.
-- [ ] Add decision journal table migration.
-- [ ] Add backend routes for theses and journal entries.
-- [ ] Add frontend pages/components for theses and journal.
-- [ ] Add investment memo DOCX workflow.
-- [ ] Add compliance/disclaimer copy.
+- [x] Seed investing workflows.
+- [x] Seed investing tabular templates.
+- [x] Add thesis table migration.
+- [x] Add decision journal table migration.
+- [x] Add backend routes for theses and journal entries.
+- [x] Add frontend pages/components for theses and journal.
+- [x] Add investment memo DOCX workflow.
+- [x] Add compliance/disclaimer copy.
+- [ ] Add upload/conversion smoke test against the Contabo plus R2 setup.
+- [ ] Add live-domain smoke test covering login, workspace creation, upload, chat, tabular review, memo generation, thesis save, and journal save.
 
 ### Next layer
 
-- [ ] Add securities table.
+- [x] Add securities table.
 - [ ] Add ticker lookup.
 - [ ] Add market-data ingestion abstraction.
 - [ ] Add basic price chart.
@@ -827,9 +1030,9 @@ A user creates a research workspace, uploads source documents, asks cited questi
 
 ### Portfolio layer
 
-- [ ] Add portfolios table.
-- [ ] Add holdings table.
-- [ ] Add transactions table.
+- [x] Add portfolios table.
+- [x] Add holdings table.
+- [x] Add transactions table.
 - [ ] Add CSV import.
 - [ ] Add allocation dashboard.
 - [ ] Add concentration analysis.

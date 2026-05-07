@@ -9,6 +9,7 @@ import { tabularRouter } from "./routes/tabular";
 import { workflowsRouter } from "./routes/workflows";
 import { userRouter } from "./routes/user";
 import { downloadsRouter } from "./routes/downloads";
+import { investmentRouter } from "./routes/investment";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -28,6 +29,7 @@ app.use("/projects/:projectId/chat", projectChatRouter);
 app.use("/single-documents", documentsRouter);
 app.use("/tabular-review", tabularRouter);
 app.use("/workflows", workflowsRouter);
+app.use("/investment", investmentRouter);
 app.use("/user", userRouter);
 app.use("/users", userRouter);
 app.use("/download", downloadsRouter);

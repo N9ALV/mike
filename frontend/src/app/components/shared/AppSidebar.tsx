@@ -7,6 +7,9 @@ import {
     FolderOpen,
     Table2,
     Library,
+    BarChart3,
+    BookOpenCheck,
+    ClipboardList,
     User,
     ChevronsUpDown,
     ChevronDown,
@@ -21,8 +24,11 @@ import { SidebarChatItem } from "@/app/components/shared/SidebarChatItem";
 import { listProjects } from "@/app/lib/mikeApi";
 
 const NAV_ITEMS = [
+    { href: "/investment", label: "Investment", icon: BarChart3 },
     { href: "/assistant", label: "Assistant", icon: MessageSquare },
     { href: "/projects", label: "Projects", icon: FolderOpen },
+    { href: "/theses", label: "Theses", icon: BookOpenCheck },
+    { href: "/journal", label: "Journal", icon: ClipboardList },
     { href: "/tabular-reviews", label: "Tabular Review", icon: Table2 },
     { href: "/workflows", label: "Workflows", icon: Library },
 ];
@@ -38,7 +44,7 @@ export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
     const { chats, currentChatId, setCurrentChatId } = useChatHistoryContext();
     const router = useRouter();
     const pathname = usePathname();
-    const [shouldAnimate, setShouldAnimate] = useState(false);
+    const shouldAnimate = true;
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [historyCollapsed, setHistoryCollapsed] = useState(false);
     const [projectNames, setProjectNames] = useState<Record<string, string>>(
@@ -55,10 +61,6 @@ export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
             })
             .catch(() => {});
     }, [user]);
-
-    useEffect(() => {
-        if (!isOpen) setShouldAnimate(true);
-    }, [isOpen]);
 
     useEffect(() => {
         const handleClickOutside = () => setIsDropdownOpen(false);

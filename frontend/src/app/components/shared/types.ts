@@ -299,3 +299,65 @@ export interface TabularReviewDetailOut {
   cells: TabularCell[];
   documents: MikeDocument[];
 }
+
+// Investment research
+
+export type ThesisStatus = "active" | "watching" | "closed" | "archived";
+export type JournalAction =
+    | "buy"
+    | "sell"
+    | "trim"
+    | "add"
+    | "hold"
+    | "avoid"
+    | "watch";
+
+export interface InvestmentThesis {
+    id: string;
+    user_id: string;
+    project_id: string | null;
+    security_id: string | null;
+    title: string;
+    asset_name: string | null;
+    thesis_md: string;
+    bull_case_md: string | null;
+    base_case_md: string | null;
+    bear_case_md: string | null;
+    key_risks_md: string | null;
+    kill_criteria_md: string | null;
+    time_horizon: string | null;
+    confidence_score: number | null;
+    status: ThesisStatus;
+    review_date: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface DecisionJournalEntry {
+    id: string;
+    user_id: string;
+    project_id: string | null;
+    portfolio_id: string | null;
+    security_id: string | null;
+    thesis_id: string | null;
+    decision_date: string;
+    asset_name: string | null;
+    action: JournalAction;
+    rationale_md: string;
+    valuation_view_md: string | null;
+    risks_md: string | null;
+    disconfirming_evidence_md: string | null;
+    position_sizing_md: string | null;
+    review_date: string | null;
+    confidence_score: number | null;
+    outcome_md: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface InvestmentOverview {
+    thesis_count: number;
+    active_thesis_count: number;
+    journal_count: number;
+    review_due_count: number;
+}
